@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/BimoFr/189_WeatherApi/issues"
   },
-  "homepage": "https://github.com/BimoFr/189_WeatherApi#readme"
+  "homepage": "https://github.com/BimoFr/189_WeatherApi#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
