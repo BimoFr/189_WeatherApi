@@ -1,49 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geolocation</title>
-</head>
+    <title>Geolocation MapTiler API</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .header-info {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed var(--border);
+        }
+
+        .header-info h3 {
+            margin: 5px 0;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .search-section {
+            margin-bottom: 25px;
+        }
+
+        .search-section label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+        }
+
+        .input-group button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .input-group button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .result-item {
+            background-color: var(--bg-color);
+            padding: 12px 15px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 10px 0;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
 <body>
 
-    <h3>Nama : </h3>
-    <h3>NIM : </h3>
+    <div class="container">
+        <div class="header-info">
+            <h3>Nama : Bimo Fadhlurrahman</h3>
+            <h3>NIM : 20240140189</h3>
+        </div>
 
-    <p>
-        Kota :
-        <span id="lokasi"></span>
-    </p>
+        <div class="search-section">
+            <label for="inputLokasi">Cari Lokasi:</label>
+            <div class="input-group">
+                <input type="text" id="inputLokasi" placeholder="Masukkan nama kota/daerah..." onkeypress="handleEnter(event)">
+                <button onclick="cariData()">Cari</button>
+            </div>
+            <div id="loading" class="loading">Mencari data...</div>
+        </div>
 
-    <hr>
-
-    <p>
-        Koordinat :
-        <span id="negara"></span>
-    </p>
+        <div class="result-grid">
+            <div class="result-item">
+                <span class="result-label">Negara</span>
+                <span class="result-value" id="negara">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Provinsi</span>
+                <span class="result-value" id="provinsi">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Kecamatan</span>
+                <span class="result-value" id="kecamatan">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Longitude</span>
+                <span class="result-value" id="longitude">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Latitude</span>
+                <span class="result-value" id="latitude">-</span>
+            </div>
+        </div>
+    </div>
 
     <script>
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                cariData();
+            }
+        }
 
-        fetch("/api/lokasi")
-            .then(response => response.json())
-            .then(data => {
+        function cariData() {
+            const lokasi = document.getElementById("inputLokasi").value;
+            if (!lokasi) {
+                alert("Silakan masukkan lokasi terlebih dahulu!");
+                return;
+            }
 
-                console.log(data);
+            document.getElementById("loading").style.display = "block";
+            
+            // Memanggil API lokal Express Anda, menyematkan input pengguna
+            const endpoint = `/api/lokasi?kota=${encodeURIComponent(lokasi)}`;
 
-                document.getElementById("lokasi").innerHTML = data.kota;
+            fetch(endpoint)
+                .then(response => {
+                    if (!response.ok) throw new Error("Data tidak ditemukan");
+                    return response.json();
+                })
+                .then(hasil => {
+                    document.getElementById("loading").style.display = "none";
+                    
+                    // Ekstrak koordinat
+                    const lon = hasil.center[0];
+                    const lat = hasil.center[1];
 
-                document.getElementById("negara").innerHTML =
-                    data.koordinat;
+                    // Ekstrak konteks (Negara, Provinsi, Kecamatan)
+                    let country = "-";
+                    let region = "-";
+                    let subregion = "-";
 
-            })
-            .catch(error => {
+                    if (hasil.context) {
+                        hasil.context.forEach(ctx => {
+                            if (ctx.id.startsWith('country')) country = ctx.text;
+                            if (ctx.id.startsWith('region') || ctx.id.startsWith('province')) region = ctx.text;
+                            if (ctx.id.startsWith('subregion') || ctx.id.startsWith('county')) subregion = ctx.text;
+                        });
+                    }
 
-                console.error(error);
+                    if (hasil.place_type && hasil.place_type.includes('country')) country = hasil.text;
+                    if (hasil.place_type && hasil.place_type.includes('region')) region = hasil.text;
 
-            });
+                    // Tampilkan ke antarmuka HTML
+                    document.getElementById("negara").innerText = country;
+                    document.getElementById("provinsi").innerText = region;
+                    document.getElementById("kecamatan").innerText = subregion !== "-" ? subregion : (hasil.text || "-");
+                    document.getElementById("longitude").innerText = lon.toFixed(6);
+                    document.getElementById("latitude").innerText = lat.toFixed(6);
+                })
+                .catch(error => {
+                    document.getElementById("loading").style.display = "none";
+                    console.error("Error fetching data:", error);
+                    alert("Terjadi kesalahan saat mengambil data dari API.");
+                    resetOutput();
+                });
+        }
 
+        function resetOutput() {
+            document.getElementById("negara").innerText = "-";
+            document.getElementById("provinsi").innerText = "-";
+            document.getElementById("kecamatan").innerText = "-";
+            document.getElementById("longitude").innerText = "-";
+            document.getElementById("latitude").innerText = "-";
+        }
     </script>
-
 </body>
 </html>
