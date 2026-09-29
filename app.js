@@ -8,29 +8,22 @@ const PORT = 3000;
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/api/lokasi", async (req, res) => {
-    const kota = "jakarta";
+    const kota = req.query.kota || "jakarta";
+    const apiKey = "uB082PxZgOIyB4qJWxqr"; 
 
-    const apiKey = "uB082PxZgOIyB4qJWxqr";
-
-    const url = `https://api.maptiler.com/geocoding/${kota}.json?key=${apiKey}`;
+    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(kota)}.json?key=${apiKey}`;
 
     try {
         const response = await axios.get(url);
 
-        const data = response.data;
-
-        const lokasi = data.features[0].matching_text;
-        const koordinat = data.features[0].geometry.coordinates;
-
-        res.json({
-            kota: lokasi,
-            koordinat: koordinat
-        });
+        if (response.data.features && response.data.features.length > 0) {
+            res.json(response.data.features[0]);
+        } else {
+            res.status(404).json({ message: "Lokasi tidak ditemukan" });
+        }
 
     } catch (error) {
-
         console.error(error.message);
-
         res.status(500).json({
             message: "Gagal mengambil data dari MapTiler"
         });
